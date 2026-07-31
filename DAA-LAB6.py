@@ -20,13 +20,9 @@ def matrix_chain_order(dims):
 
     n = len(dims) - 1
 
-    # m[i][j] = minimum multiplication cost
     m = [[0] * (n + 1) for _ in range(n + 1)]
-
-    # s[i][j] = optimal splitting position
     s = [[0] * (n + 1) for _ in range(n + 1)]
 
-    # Chain length
     for length in range(2, n + 1):
 
         for i in range(1, n - length + 2):
@@ -106,14 +102,18 @@ st.set_page_config(
     layout="wide"
 )
 
+
+# ==========================================
+# Title
+# ==========================================
 st.title("🔢 Matrix Chain Multiplication")
 
 st.write(
     """
     **Matrix Chain Multiplication using Dynamic Programming**
 
-    Find the minimum number of scalar multiplications required
-    to multiply a sequence of matrices.
+    Find the minimum number of scalar multiplications
+    required to multiply a sequence of matrices.
     """
 )
 
@@ -128,6 +128,7 @@ st.write(
     Enter dimensions separated by commas.
 
     Example:
+
     `10,30,5,60,10`
     """
 )
@@ -148,155 +149,228 @@ if st.button("Calculate"):
         dims = [
             int(x.strip())
             for x in dims_input.split(",")
+            if x.strip()
         ]
 
-        # Validation
-        if len(dims) < 2:
+    except ValueError:
 
-            st.error(
-                "Enter at least 2 dimensions."
-            )
+        st.error(
+            "Invalid input! Please enter only positive integers separated by commas."
+        )
 
-        elif any(x <= 0 for x in dims):
-
-            st.error(
-                "All dimensions must be positive."
-            )
-
-        else:
-
-            n = len(dims) - 1
-
-            # Run DP
-            m, s = matrix_chain_order(dims)
-
-            # ==================================
-            # Matrix Dimensions
-            # ==================================
-            st.subheader("Matrix Dimensions")
-
-            matrix_data = []
-
-            for i in range(n):
-
-                matrix_data.append({
-                    "Matrix": f"A{i + 1}",
-                    "Rows": dims[i],
-                    "Columns": dims[i + 1],
-                    "Dimension":
-                        f"{dims[i]} × {dims[i + 1]}"
-                })
-
-            st.dataframe(
-                pd.DataFrame(matrix_data),
-                use_container_width=True,
-                hide_index=True
-            )
+        st.stop()
 
 
-            # ==================================
-            # Results
-            # ==================================
-            st.subheader("Results")
+    # ======================================
+    # Validation
+    # ======================================
 
-            col1, col2 = st.columns(2)
+    if len(dims) < 2:
 
-            with col1:
+        st.error(
+            "Enter at least 2 dimensions."
+        )
 
-                st.metric(
-                    "Minimum Scalar Multiplications",
-                    f"{m[1][n]:,}"
+        st.stop()
+
+
+    if any(x <= 0 for x in dims):
+
+        st.error(
+            "All dimensions must be positive."
+        )
+
+        st.stop()
+
+
+    # ======================================
+    # Number of Matrices
+    # ======================================
+
+    n = len(dims) - 1
+
+
+    # ======================================
+    # Run DP
+    # ======================================
+
+    m, s = matrix_chain_order(dims)
+
+
+    # ======================================
+    # Matrix Dimensions
+    # ======================================
+
+    st.subheader("📐 Matrix Dimensions")
+
+    matrix_data = []
+
+    for i in range(n):
+
+        matrix_data.append({
+            "Matrix": f"A{i + 1}",
+            "Rows": dims[i],
+            "Columns": dims[i + 1],
+            "Dimension": f"{dims[i]} × {dims[i + 1]}"
+        })
+
+
+    st.dataframe(
+        pd.DataFrame(matrix_data),
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+    # ======================================
+    # Results
+    # ======================================
+
+    st.subheader("📊 Results")
+
+    col1, col2 = st.columns(2)
+
+
+    with col1:
+
+        st.metric(
+            "Minimum Scalar Multiplications",
+            f"{m[1][n]:,}"
+        )
+
+
+    with col2:
+
+        optimal = print_optimal_parens(
+            s,
+            1,
+            n
+        )
+
+        st.write(
+            "**Optimal Parenthesization**"
+        )
+
+        st.code(optimal)
+
+
+    # ======================================
+    # DP Cost Table
+    # ======================================
+
+    st.subheader("📋 DP Cost Table")
+
+    st.write(
+        """
+        `m[i][j]` represents the minimum number
+        of scalar multiplications required to
+        multiply matrices Ai through Aj.
+        """
+    )
+
+    dp_table = create_dp_table(
+        m,
+        n
+    )
+
+    st.dataframe(
+        dp_table,
+        use_container_width=True
+    )
+
+
+    # ======================================
+    # Split Table
+    # ======================================
+
+    st.subheader("🔀 Optimal Split Table")
+
+    split_data = []
+
+    for i in range(1, n + 1):
+
+        row = []
+
+        for j in range(1, n + 1):
+
+            if j <= i:
+
+                row.append("---")
+
+            else:
+
+                row.append(
+                    f"k = {s[i][j]}"
                 )
 
-            with col2:
-
-                optimal = print_optimal_parens(
-                    s, 1, n
-                )
-
-                st.write("**Optimal Parenthesization**")
-
-                st.code(optimal)
+        split_data.append(row)
 
 
-            # ==================================
-            # DP Cost Table
-            # ==================================
-            st.subheader("DP Cost Table")
-
-            st.write(
-                """
-                `m[i][j]` represents the minimum number
-                of scalar multiplications needed to
-                multiply matrices Ai through Aj.
-                """
-            )
-
-            dp_table = create_dp_table(m, n)
-
-            st.dataframe(
-                dp_table,
-                use_container_width=True
-            )
+    split_table = pd.DataFrame(
+        split_data,
+        index=[
+            f"A{i}"
+            for i in range(1, n + 1)
+        ],
+        columns=[
+            f"A{j}"
+            for j in range(1, n + 1)
+        ]
+    )
 
 
-            # ==================================
-            # Split Table
-            # ==================================
-            st.subheader("Optimal Split Table")
+    st.dataframe(
+        split_table,
+        use_container_width=True
+    )
 
-            split_data = []
 
-            for i in range(1, n + 1):
+    # ======================================
+    # Calculation Explanation
+    # ======================================
 
-                row = []
+    st.subheader("🧮 Calculation")
 
-                for j in range(1, n + 1):
+    st.success(
+        f"""
+        Minimum number of scalar multiplications:
 
-                    if j <= i:
+        **{m[1][n]:,}**
 
-                        row.append("---")
+        Optimal parenthesization:
 
-                    else:
-
-                        row.append(
-                            f"k = {s[i][j]}"
-                        )
-
-                split_data.append(row)
-
-            split_table = pd.DataFrame(
-                split_data,
-                index=[
-                    f"A{i}"
-                    for i in range(1, n + 1)
-                ],
-                columns=[
-                    f"A{j}"
-                    for j in range(1, n + 1)
-                ]
-            )
-
-            st.dataframe(
-                split_table,
-                use_container_width=True
-            )
+        **{optimal}**
+        """
+    )
 
 
 # ==========================================
 # Explanation
 # ==========================================
+
 st.divider()
 
 st.subheader("📚 Algorithm Information")
 
 col1, col2, col3 = st.columns(3)
 
+
 with col1:
-    st.info("Time Complexity: O(n³)")
+
+    st.info(
+        "Time Complexity: O(n³)"
+    )
+
 
 with col2:
-    st.info("Space Complexity: O(n²)")
+
+    st.info(
+        "Space Complexity: O(n²)"
+    )
+
 
 with col3:
-    st.info("Technique: Dynamic Programming")
+
+    st.info(
+        "Technique: Dynamic Programming"
+    )
