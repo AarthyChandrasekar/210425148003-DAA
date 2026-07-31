@@ -6,14 +6,15 @@ import random
 # ==========================================
 # Divide and Conquer Min-Max
 # ==========================================
-
 def min_max_dc(arr, low, high):
-    # Base case: one element
+
+    # One element
     if low == high:
         return arr[low], arr[low], 0
 
-    # Base case: two elements
+    # Two elements
     if high == low + 1:
+
         if arr[low] < arr[high]:
             return arr[low], arr[high], 1
         else:
@@ -31,22 +32,13 @@ def min_max_dc(arr, low, high):
     )
 
     # Conquer
-    min_comp = 1
-    max_comp = 1
-
-    overall_min = (
-        lmin if lmin < rmin else rmin
-    )
-
-    overall_max = (
-        lmax if lmax > rmax else rmax
-    )
+    overall_min = lmin if lmin < rmin else rmin
+    overall_max = lmax if lmax > rmax else rmax
 
     total_comps = (
         left_comps
         + right_comps
-        + min_comp
-        + max_comp
+        + 2
     )
 
     return overall_min, overall_max, total_comps
@@ -55,12 +47,10 @@ def min_max_dc(arr, low, high):
 # ==========================================
 # Naive Method
 # ==========================================
-
 def min_max_naive(arr):
 
     mn = arr[0]
     mx = arr[0]
-
     comparisons = 0
 
     for x in arr[1:]:
@@ -79,9 +69,22 @@ def min_max_naive(arr):
 
 
 # ==========================================
+# Theoretical Comparison Formula
+# ==========================================
+def theoretical_comparisons(n):
+
+    if n <= 1:
+        return 0
+
+    if n % 2 == 0:
+        return (3 * n // 2) - 2
+
+    return (3 * (n - 1) // 2)
+
+
+# ==========================================
 # Performance Analysis
 # ==========================================
-
 def performance_analysis():
 
     sizes = [10, 100, 1000, 10000]
@@ -96,21 +99,23 @@ def performance_analysis():
         ]
 
         # Divide and Conquer
-        mn, mx, dc_comps = min_max_dc(
-            arr, 0, len(arr) - 1
+        _, _, dc_comps = min_max_dc(
+            arr,
+            0,
+            len(arr) - 1
         )
 
         # Naive
         _, _, naive_comps = min_max_naive(arr)
 
         # Theoretical formula
-        formula = (3 * size // 2) - 2
+        formula = theoretical_comparisons(size)
 
         results.append({
             "Array Size": size,
             "D&C Comparisons": dc_comps,
             "Naive Comparisons": naive_comps,
-            "Formula (3n/2 - 2)": formula
+            "Formula": formula
         })
 
     return pd.DataFrame(results)
@@ -119,7 +124,6 @@ def performance_analysis():
 # ==========================================
 # Streamlit Configuration
 # ==========================================
-
 st.set_page_config(
     page_title="Min-Max Divide and Conquer",
     page_icon="🔢",
@@ -128,16 +132,15 @@ st.set_page_config(
 
 
 # ==========================================
-# Main UI
+# Main Title
 # ==========================================
-
 st.title("🔢 Min-Max using Divide and Conquer")
 
 st.write(
     """
     Find the **minimum and maximum elements** of an array
-    using **Divide and Conquer** and compare its number of
-    comparisons with the **Naive approach**.
+    using the **Divide and Conquer** technique and compare
+    it with the **Naive approach**.
     """
 )
 
@@ -145,7 +148,6 @@ st.write(
 # ==========================================
 # Input Array
 # ==========================================
-
 st.subheader("Enter Array")
 
 array_input = st.text_input(
@@ -155,10 +157,9 @@ array_input = st.text_input(
 
 
 # ==========================================
-# Find Min-Max
+# Find Min-Max Button
 # ==========================================
-
-if st.button("Find Minimum and Maximum"):
+if st.button("🔍 Find Minimum and Maximum"):
 
     try:
 
@@ -168,123 +169,186 @@ if st.button("Find Minimum and Maximum"):
             if x.strip()
         ]
 
-        if len(arr) == 0:
+    except ValueError:
 
-            st.error("Please enter at least one number.")
+        st.error(
+            "Invalid input! Please enter integers only."
+        )
 
-        else:
-
-            # Divide and Conquer
-            mn_dc, mx_dc, dc_comps = min_max_dc(
-                arr,
-                0,
-                len(arr) - 1
-            )
-
-            # Naive
-            mn_naive, mx_naive, naive_comps = (
-                min_max_naive(arr)
-            )
-
-            # ==================================
-            # Display Array
-            # ==================================
-
-            st.subheader("Input Array")
-
-            st.write(arr)
+        st.stop()
 
 
-            # ==================================
-            # Results
-            # ==================================
+    if len(arr) == 0:
 
-            st.subheader("Results")
+        st.error(
+            "Please enter at least one number."
+        )
 
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-
-                st.success("Minimum")
-
-                st.metric(
-                    "Minimum Value",
-                    mn_dc
-                )
-
-            with col2:
-
-                st.info("Maximum")
-
-                st.metric(
-                    "Maximum Value",
-                    mx_dc
-                )
-
-            with col3:
-
-                st.warning("Array Size")
-
-                st.metric(
-                    "Number of Elements",
-                    len(arr)
-                )
+        st.stop()
 
 
-            # ==================================
-            # Comparison Table
-            # ==================================
+    # ======================================
+    # Divide and Conquer
+    # ======================================
 
-            st.subheader("Comparison Count")
-
-            formula = (
-                3 * len(arr) // 2
-            ) - 2
-
-            comparison_data = pd.DataFrame({
-                "Method": [
-                    "Divide & Conquer",
-                    "Naive",
-                    "Theoretical Formula"
-                ],
-                "Comparisons": [
-                    dc_comps,
-                    naive_comps,
-                    formula
-                ]
-            })
-
-            st.dataframe(
-                comparison_data,
-                use_container_width=True,
-                hide_index=True
-            )
+    mn_dc, mx_dc, dc_comps = min_max_dc(
+        arr,
+        0,
+        len(arr) - 1
+    )
 
 
-            # ==================================
-            # Explanation
-            # ==================================
+    # ======================================
+    # Naive
+    # ======================================
 
-            st.subheader("Algorithm Analysis")
+    mn_naive, mx_naive, naive_comps = (
+        min_max_naive(arr)
+    )
 
-            st.write(
-                f"""
-                **Divide & Conquer:**
-                {dc_comps} comparisons
 
-                **Naive Approach:**
-                {naive_comps} comparisons
+    # ======================================
+    # Input Array
+    # ======================================
 
-                **Theoretical formula:**
-                3n/2 - 2 = {formula}
-                """
-            )
+    st.subheader("📋 Input Array")
+
+    st.code(str(arr))
+
+
+    # ======================================
+    # Results
+    # ======================================
+
+    st.subheader("📊 Results")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        st.metric(
+            "Minimum",
+            mn_dc
+        )
+
+    with col2:
+
+        st.metric(
+            "Maximum",
+            mx_dc
+        )
+
+    with col3:
+
+        st.metric(
+            "Array Size",
+            len(arr)
+        )
+
+
+    # ======================================
+    # Verify Results
+    # ======================================
+
+    if (
+        mn_dc == mn_naive
+        and mx_dc == mx_naive
+    ):
+
+        st.success(
+            "✓ Divide & Conquer and Naive results match!"
+        )
+
+
+    # ======================================
+    # Comparison Count
+    # ======================================
+
+    st.subheader("🔢 Comparison Count")
+
+    formula = theoretical_comparisons(
+        len(arr)
+    )
+
+    comparison_data = pd.DataFrame({
+
+        "Method": [
+            "Divide & Conquer",
+            "Naive",
+            "Theoretical Formula"
+        ],
+
+        "Comparisons": [
+            dc_comps,
+            naive_comps,
+            formula
+        ]
+
+    })
+
+    st.dataframe(
+        comparison_data,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+    # ======================================
+    # Comparison Chart
+    # ======================================
+
+    st.subheader("📈 Comparison Chart")
+
+    chart_data = comparison_data.set_index(
+        "Method"
+    )
+
+    st.bar_chart(
+        chart_data["Comparisons"]
+    )
+
+
+    # ======================================
+    # Algorithm Analysis
+    # ======================================
+
+    st.subheader("📚 Algorithm Analysis")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        st.markdown(
+            f"""
+            ### Divide & Conquer
+
+            Comparisons: **{dc_comps}**
+
+            Time Complexity: **O(n)**
+
+            Space Complexity: **O(log n)**
+            """
+
+        )
+
+    with col2:
+
+        st.markdown(
+            f"""
+            ### Naive Approach
+
+            Comparisons: **{naive_comps}**
+
+            Time Complexity: **O(n)**
+
+            Space Complexity: **O(1)**
+            """
+        )
 
 
 # ==========================================
 # Performance Analysis
 # ==========================================
-
 st.divider()
 
 st.subheader("⚡ Performance Analysis")
@@ -296,9 +360,19 @@ st.write(
     """
 )
 
-if st.button("Run Performance Analysis"):
 
-    df = performance_analysis()
+if st.button("🚀 Run Performance Analysis"):
+
+    with st.spinner(
+        "Running performance analysis..."
+    ):
+
+        df = performance_analysis()
+
+
+    # ======================================
+    # Table
+    # ======================================
 
     st.dataframe(
         df,
@@ -306,15 +380,42 @@ if st.button("Run Performance Analysis"):
         hide_index=True
     )
 
-    # Comparison graph
-    chart_df = df.set_index("Array Size")
+
+    # ======================================
+    # Chart
+    # ======================================
+
+    st.subheader(
+        "📈 Comparison Growth"
+    )
+
+    chart_df = df.set_index(
+        "Array Size"
+    )
 
     st.line_chart(
         chart_df[
             [
                 "D&C Comparisons",
                 "Naive Comparisons",
-                "Formula (3n/2 - 2)"
+                "Formula"
             ]
         ]
+    )
+
+
+    # ======================================
+    # Explanation
+    # ======================================
+
+    st.info(
+        """
+        **Observation:**
+
+        The Divide & Conquer method reduces the number
+        of comparisons compared with the naive method.
+
+        Both methods have O(n) time complexity, but
+        Divide & Conquer uses fewer comparisons.
+        """
     )
